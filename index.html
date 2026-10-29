@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prompt Library</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --white:   #ffffff;
+    --off:     #f7f6f2;
+    --light:   #eeecea;
+    --border:  #e0ded9;
+    --text:    #1a1917;
+    --muted:   #6b6860;
+    --subtle:  #b0ada7;
+    --accent:  #2a5cff;
+    --accent-l:#eef1ff;
+
+    --claude:     #2a5cff;
+    --chatgpt:    #10a37f;
+    --gemini:     #e37c27;
+    --midjourney: #8b5cf6;
+    --perplexity: #e04060;
+    --other:      #64748b;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--white);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .nav-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.15rem;
+    color: var(--text);
+    text-decoration: none;
+    letter-spacing: -0.01em;
+  }
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+  }
+  .nav-links a {
+    font-size: 0.82rem;
+    font-weight: 400;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: color 0.15s;
+  }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta {
+    font-size: 0.78rem;
+    font-weight: 500;
+    background: var(--text);
+    color: var(--white) !important;
+    padding: 0.45rem 1.1rem;
+    border-radius: 100px;
+    transition: opacity 0.15s !important;
+  }
+  .nav-cta:hover { opacity: 0.75; color: var(--white) !important; }
+
+  /* ── SECTION SHARED ── */
+  section { padding: 7rem 2rem; }
+  .container { max-width: 1100px; margin: 0 auto; }
+
+  /* ── HERO ── */
+  #hero {
+    padding: 8rem 2rem 6rem;
+    background: var(--off);
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  #hero::before {
+    content: '';
+    position: absolute;
+    top: -120px; left: 50%;
+    transform: translateX(-50%);
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(42,92,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--accent-l);
+    color: var(--accent);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.35rem 0.9rem;
+    border-radius: 100px;
+    border: 1px solid rgba(42,92,255,0.18);
+    margin-bottom: 2rem;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  #hero h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2.8rem, 6vw, 5rem);
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+    color: var(--text);
+    max-width: 720px;
+    margin: 0 auto 1.5rem;
+    animation: fadeUp 0.5s 0.1s ease both;
+  }
+  #hero h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  #hero p {
+    font-size: 1.05rem;
+    font-weight: 300;
+    color: var(--muted);
+    max-width: 500px;
+    margin: 0 auto 2.5rem;
+    animation: fadeUp 0.5s 0.2s ease both;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    animation: fadeUp 0.5s 0.3s ease both;
+  }
+  .btn-primary {
+    background: var(--text);
+    color: var(--white);
+    padding: 0.75rem 1.8rem;
+    border-radius: 100px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-primary:hover { opacity: 0.75; }
+  .btn-secondary {
+    background: var(--white);
+    color: var(--text);
+    padding: 0.75rem 1.8rem;
+    border-radius: 100px;
+    font-size: 0.85rem;
+    font-weight: 400;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: border-color 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-secondary:hover { border-color: var(--subtle); }
+
+  .hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    margin-top: 4rem;
+    padding-top: 2.5rem;
+    border-top: 1px solid var(--border);
+    animation: fadeUp 0.5s 0.4s ease both;
+    flex-wrap: wrap;
+  }
+  .hero-stat-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    color: var(--text);
+    display: block;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+  .hero-stat-label {
+    font-size: 0.75rem;
+    color: var(--subtle);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  /* ── ABOUT ── */
+  #about {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+  }
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5rem;
+    align-items: center;
+  }
+  .about-label {
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.2rem;
+  }
+  .about-grid h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2rem, 3.5vw, 2.8rem);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: 1.2rem;
+  }
+  .about-grid p {
+    font-size: 0.95rem;
+    font-weight: 300;
+    color: var(--muted);
+    line-height: 1.8;
+    margin-bottom: 1rem;
+  }
+  .about-features {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+  .about-feat {
+    background: var(--off);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    transition: border-color 0.2s;
+  }
+  .about-feat:hover { border-color: var(--subtle); }
+  .about-feat-icon {
+    width: 36px; height: 36px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+    font-size: 1rem;
+  }
+  .about-feat h4 {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 0.3rem;
+  }
+  .about-feat p {
+    font-size: 0.78rem;
+    color: var(--subtle);
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  /* ── FEATURES / LIBRARY ── */
+  #library {
+    background: var(--off);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-head {
+    text-align: center;
+    margin-bottom: 3.5rem;
+  }
+  .section-label {
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+  }
+  .section-head h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2rem, 3.5vw, 2.8rem);
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: 0.75rem;
+  }
+  .section-head p {
+    font-size: 0.95rem;
+    font-weight: 300;
+    color: var(--muted);
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* Controls */
+  .lib-controls {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .lib-search {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+  }
+  .lib-search svg {
+    position: absolute;
+    left: 0.9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--subtle);
+    pointer-events: none;
+  }
+  .lib-search input {
+    width: 100%;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.65rem 1rem 0.65rem 2.5rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.83rem;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .lib-search input::placeholder { color: var(--subtle); }
+  .lib-search input:focus { border-color: var(--accent); }
+
+  .platform-pills { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .pill {
+    padding: 0.45rem 0.9rem;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: var(--white);
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .pill:hover { border-color: var(--subtle); color: var(--text); }
+  .pill.active { background: var(--text); color: var(--white); border-color: var(--text); }
+
+  .btn-add-prompt {
+    padding: 0.6rem 1.2rem;
+    border-radius: 100px;
+    background: var(--accent);
+    color: var(--white);
+    font-size: 0.78rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+    transition: opacity 0.15s;
+  }
+  .btn-add-prompt:hover { opacity: 0.8; }
+
+  /* Table */
+  .table-container {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .table-meta {
+    padding: 0.9rem 1.4rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.75rem;
+    color: var(--subtle);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .table-meta strong { color: var(--muted); }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    padding: 0.85rem 1.2rem;
+    text-align: left;
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--subtle);
+    background: var(--off);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  thead th:hover { color: var(--muted); }
+  thead th.sorted { color: var(--accent); }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+    animation: fadeIn 0.3s ease both;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--off); }
+  tbody tr:hover .row-copy { opacity: 1; }
+  tbody tr:hover .row-del  { opacity: 1; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  td { padding: 1rem 1.2rem; vertical-align: top; font-size: 0.83rem; }
+
+  /* Use Case */
+  .uc-chip {
+    display: inline-block;
+    padding: 0.25rem 0.65rem;
+    border-radius: 6px;
+    background: var(--off);
+    border: 1px solid var(--border);
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* Prompt */
+  .prompt-wrap { max-width: 420px; min-width: 220px; }
+  .prompt-text {
+    color: var(--muted);
+    font-size: 0.82rem;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  .prompt-text:hover { color: var(--text); }
+  .prompt-text.open { -webkit-line-clamp: unset; line-clamp: unset; overflow: visible; }
+  .row-copy {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 0.45rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 5px;
+    background: var(--off);
+    border: 1px solid var(--border);
+    font-size: 0.68rem;
+    color: var(--subtle);
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .row-copy:hover { color: var(--accent); border-color: var(--accent); }
+  .row-copy.done  { color: #10a37f; border-color: #10a37f; opacity: 1; }
+
+  /* Platform badge */
+  .plat {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.7rem;
+    border-radius: 100px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .plat-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .p-claude     { background: rgba(42,92,255,.08);   color: #2a5cff;  }
+  .p-chatgpt    { background: rgba(16,163,127,.08);  color: #10a37f;  }
+  .p-gemini     { background: rgba(227,124,39,.08);  color: #e37c27;  }
+  .p-midjourney { background: rgba(139,92,246,.08);  color: #8b5cf6;  }
+  .p-perplexity { background: rgba(224,64,96,.08);   color: #e04060;  }
+  .p-other      { background: rgba(100,116,139,.08); color: #64748b;  }
+
+  .dot-claude     { background: #2a5cff; }
+  .dot-chatgpt    { background: #10a37f; }
+  .dot-gemini     { background: #e37c27; }
+  .dot-midjourney { background: #8b5cf6; }
+  .dot-perplexity { background: #e04060; }
+  .dot-other      { background: #64748b; }
+
+  /* Remarks */
+  .rem { font-size: 0.78rem; color: var(--subtle); max-width: 200px; min-width: 120px; font-style: italic; }
+
+  /* Delete */
+  .row-del {
+    background: none;
+    border: none;
+    color: var(--subtle);
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.15s;
+    padding: 0.2rem;
+  }
+  .row-del:hover { color: var(--perplexity); }
+
+  /* Empty */
+  .empty-row td {
+    text-align: center;
+    padding: 3.5rem;
+    color: var(--subtle);
+    font-size: 0.85rem;
+    font-style: italic;
+  }
+
+  /* ── MODAL ── */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26,25,23,.45);
+    backdrop-filter: blur(6px);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .overlay.show { display: flex; }
+
+  .modal {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 2.2rem;
+    width: 100%;
+    max-width: 520px;
+    animation: modalUp 0.2s ease;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+  }
+  @keyframes modalUp {
+    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .modal h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.5rem;
+    color: var(--text);
+    margin-bottom: 1.5rem;
+  }
+  .field { margin-bottom: 1.1rem; }
+  .field label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--subtle);
+    margin-bottom: 0.4rem;
+  }
+  .field input, .field textarea, .field select {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.65rem 0.9rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.83rem;
+    color: var(--text);
+    outline: none;
+    background: var(--white);
+    transition: border-color 0.15s;
+    resize: vertical;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--accent); }
+  .field select option { background: var(--white); }
+  .modal-btns {
+    display: flex;
+    gap: 0.6rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+  }
+  .m-cancel {
+    padding: 0.6rem 1.2rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    font-size: 0.8rem;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .m-save {
+    padding: 0.6rem 1.4rem;
+    border: none;
+    border-radius: 8px;
+    background: var(--text);
+    color: var(--white);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: opacity 0.15s;
+  }
+  .m-save:hover { opacity: 0.75; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--text);
+    color: rgba(255,255,255,0.45);
+    padding: 2.5rem 2rem;
+    text-align: center;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+  }
+  footer strong { color: rgba(255,255,255,0.7); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Scroll reveal */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.55s ease, transform 0.55s ease;
+  }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 768px) {
+    .about-grid { grid-template-columns: 1fr; gap: 3rem; }
+    .about-features { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+    td, th { padding: 0.75rem 0.85rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="#hero" class="nav-logo">PromptLib</a>
+    <ul class="nav-links">
+      <li><a href="#about">About</a></li>
+      <li><a href="#library">Library</a></li>
+      <li><a href="#library" class="nav-cta">Browse Prompts →</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="container">
+    <div class="hero-badge">✦ Curated prompt collection</div>
+    <h1>Your Personal<br><em>Prompt Library</em></h1>
+    <p>A clean, searchable collection of prompts that actually work — organised by use case and platform.</p>
+    <div class="hero-actions">
+      <a href="#library" class="btn-primary">Browse Prompts</a>
+      <a href="#about" class="btn-secondary">Learn More</a>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <span class="hero-stat-num" id="s-total">10</span>
+        <span class="hero-stat-label">Prompts</span>
+      </div>
+      <div>
+        <span class="hero-stat-num" id="s-plat">5</span>
+        <span class="hero-stat-label">Platforms</span>
+      </div>
+      <div>
+        <span class="hero-stat-num" id="s-cat">10</span>
+        <span class="hero-stat-label">Use Cases</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="container">
+    <div class="about-grid reveal">
+      <div>
+        <p class="about-label">About This Library</p>
+        <h2>Prompts that are precise, tested & ready to use.</h2>
+        <p>This library is a personal collection of prompts built up over time — each one refined through real use. No fluff, no filler. Just prompts that deliver consistent, high-quality results across the tools you already use.</p>
+        <p>Use the search and filter to find what you need, expand any prompt for the full text, and copy it with one click.</p>
+      </div>
+      <div class="about-features">
+        <div class="about-feat">
+          <div class="about-feat-icon">🔍</div>
+          <h4>Instant Search</h4>
+          <p>Find any prompt across all fields in real time.</p>
+        </div>
+        <div class="about-feat">
+          <div class="about-feat-icon">📋</div>
+          <h4>One-Click Copy</h4>
+          <p>Copy the full prompt to clipboard instantly.</p>
+        </div>
+        <div class="about-feat">
+          <div class="about-feat-icon">🏷️</div>
+          <h4>Platform Tags</h4>
+          <p>Filter by Claude, ChatGPT, Gemini & more.</p>
+        </div>
+        <div class="about-feat">
+          <div class="about-feat-icon">✏️</div>
+          <h4>Add Your Own</h4>
+          <p>Expand the library with your own prompts.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LIBRARY -->
+<section id="library">
+  <div class="container">
+    <div class="section-head reveal">
+      <p class="section-label">Prompt Library</p>
+      <h2>Browse All Prompts</h2>
+      <p>Search, filter by platform, and copy any prompt in one click.</p>
+    </div>
+
+    <div class="lib-controls reveal">
+      <div class="lib-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" id="searchInput" placeholder="Search prompts…">
+      </div>
+      <div class="platform-pills" id="pills">
+        <button class="pill active" data-p="all">All</button>
+      </div>
+      <button class="btn-add-prompt" onclick="openModal()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        Add Prompt
+      </button>
+    </div>
+
+    <div class="table-container reveal">
+      <div class="table-meta">
+        <span id="metaText">Loading…</span>
+        <span>Click prompt text to expand ↕</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th data-col="useCase">Use Case</th>
+              <th data-col="prompt">Prompt</th>
+              <th data-col="platform">Platform</th>
+              <th data-col="remarks">Remarks</th>
+              <th style="width:36px"></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>Built with care &mdash; <strong>PromptLib</strong> &mdash; Your personal AI prompt collection.</p>
+</footer>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" onclick="bgClose(event)">
+  <div class="modal">
+    <h3>Add New Prompt</h3>
+    <div class="field">
+      <label>Use Case</label>
+      <input id="f_uc" type="text" placeholder="e.g. Email Drafting, Code Review…">
+    </div>
+    <div class="field">
+      <label>Prompt</label>
+      <textarea id="f_pr" rows="4" placeholder="Paste your full prompt here…"></textarea>
+    </div>
+    <div class="field">
+      <label>Platform</label>
+      <select id="f_pl">
+        <option>Claude</option>
+        <option>ChatGPT</option>
+        <option>Gemini</option>
+        <option>Midjourney</option>
+        <option>Perplexity</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Remarks</label>
+      <input id="f_rm" type="text" placeholder="Optional tips or notes…">
+    </div>
+    <div class="modal-btns">
+      <button class="m-cancel" onclick="closeModal()">Cancel</button>
+      <button class="m-save" onclick="savePrompt()">Save Prompt</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──
+let data = [
+  { id:1,  useCase:"Email Drafting",       platform:"Claude",      remarks:"Great for client communication.",           prompt:"You are a professional email writer. Draft a concise, polite email based on the following context: [CONTEXT]. Use a formal tone, keep it under 150 words, and include a clear call-to-action." },
+  { id:2,  useCase:"Code Review",          platform:"ChatGPT",     remarks:"Use GPT-4 for complex codebases.",          prompt:"Review the following code snippet for bugs, performance issues, and best practices. Provide specific line-by-line suggestions and explain the reasoning behind each recommendation. Code: [CODE]" },
+  { id:3,  useCase:"Meeting Summary",      platform:"Claude",      remarks:"Ideal for long Zoom/Teams transcripts.",    prompt:"Summarize the following meeting transcript into: 1) Key decisions made, 2) Action items with owners, 3) Open questions. Format as a clean bullet-point list. Transcript: [TRANSCRIPT]" },
+  { id:4,  useCase:"Image Generation",     platform:"Midjourney",  remarks:"Replace [SUBJECT] with your scene.",       prompt:"Cinematic wide shot, golden hour lighting, [SUBJECT], ultra-detailed, photorealistic, shot on Sony A7IV, 35mm lens, shallow depth of field, Kodak film grain, --ar 16:9 --style raw --v 6" },
+  { id:5,  useCase:"Research Summary",     platform:"Perplexity",  remarks:"Enable Academic mode for papers.",         prompt:"Search for the most recent and credible information about [TOPIC]. Provide a structured summary with: key facts, contrasting perspectives, current debates, and 3–5 source citations. Prioritize sources from the last 12 months." },
+  { id:6,  useCase:"LinkedIn Post",        platform:"Claude",      remarks:"Add 3–5 hashtags at the end.",             prompt:"Write a LinkedIn post about [TOPIC]. Make it insightful, conversational, and end with a thought-provoking question. Use short paragraphs (max 2 sentences each). Avoid corporate jargon. Target audience: [AUDIENCE]. Tone: [TONE]." },
+  { id:7,  useCase:"SQL Query Help",       platform:"ChatGPT",     remarks:"Always paste the schema for accuracy.",    prompt:"Given this database schema: [SCHEMA], write an optimized SQL query to [GOAL]. Explain the query logic, any indexes that would help performance, and potential edge cases to watch for." },
+  { id:8,  useCase:"Competitive Analysis", platform:"Gemini",      remarks:"Cross-check with Perplexity after.",      prompt:"Conduct a structured competitive analysis comparing [COMPANY/PRODUCT] against its top 3–5 competitors. Cover: pricing, features, positioning, strengths & weaknesses, and market gaps. Present as a comparison table followed by a strategic summary." },
+  { id:9,  useCase:"Product Spec Writing", platform:"Claude",      remarks:"Add company context for tailored output.", prompt:"Act as a senior product manager. Write a PRD for [FEATURE]. Include: problem statement, user stories (as 'As a [user], I want…'), acceptance criteria, out-of-scope items, and success metrics." },
+  { id:10, useCase:"Data Interpretation",  platform:"ChatGPT",     remarks:"Upload CSV or paste table data.",          prompt:"Analyze the following dataset/chart description and provide: key trends, anomalies, actionable insights, and 2–3 follow-up questions a business analyst would ask. Data: [DATA/DESCRIPTION]" }
+];
+
+let filter = 'all', sortCol = null, sortDir = 1, nextId = 11;
+
+function platClass(p) {
+  return { Claude:'p-claude', ChatGPT:'p-chatgpt', Gemini:'p-gemini', Midjourney:'p-midjourney', Perplexity:'p-perplexity' }[p] || 'p-other';
+}
+function dotClass(p) {
+  return { Claude:'dot-claude', ChatGPT:'dot-chatgpt', Gemini:'dot-gemini', Midjourney:'dot-midjourney', Perplexity:'dot-perplexity' }[p] || 'dot-other';
+}
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escA(s) { return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n'); }
+
+function render() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  let rows = data.filter(r =>
+    (filter === 'all' || r.platform === filter) &&
+    (!q || [r.useCase,r.prompt,r.platform,r.remarks].some(v => v.toLowerCase().includes(q)))
+  );
+  if (sortCol) rows.sort((a,b) => {
+    const av=(a[sortCol]||'').toLowerCase(), bv=(b[sortCol]||'').toLowerCase();
+    return av<bv ? -sortDir : av>bv ? sortDir : 0;
+  });
+
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+
+  document.getElementById('metaText').innerHTML = `Showing <strong>${rows.length}</strong> of <strong>${data.length}</strong> prompts`;
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="5">No prompts match your search.</td></tr>`;
+  } else {
+    rows.forEach((r,i) => {
+      const tr = document.createElement('tr');
+      tr.style.animationDelay = `${i*0.025}s`;
+      tr.innerHTML = `
+        <td><span class="uc-chip">${esc(r.useCase)}</span></td>
+        <td class="prompt-wrap">
+          <div class="prompt-text" onclick="this.classList.toggle('open')">${esc(r.prompt)}</div>
+          <button class="row-copy" onclick="doCopy(this,'${escA(r.prompt)}')">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg> Copy
+          </button>
+        </td>
+        <td>
+          <span class="plat ${platClass(r.platform)}">
+            <span class="plat-dot ${dotClass(r.platform)}"></span>
+            ${esc(r.platform)}
+          </span>
+        </td>
+        <td class="rem">${esc(r.remarks)||'—'}</td>
+        <td>
+          <button class="row-del" onclick="del(${r.id})" title="Delete">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
+            </svg>
+          </button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+  updateStats();
+  updatePills();
+}
+
+function updateStats() {
+  document.getElementById('s-total').textContent = data.length;
+  document.getElementById('s-plat').textContent  = new Set(data.map(d=>d.platform)).size;
+  document.getElementById('s-cat').textContent   = new Set(data.map(d=>d.useCase)).size;
+}
+
+function updatePills() {
+  const plats = ['all', ...new Set(data.map(d=>d.platform))];
+  document.getElementById('pills').innerHTML = plats.map(p =>
+    `<button class="pill ${filter===p?'active':''}" data-p="${p}" onclick="setFilter('${p}')">${p==='all'?'All':p}</button>`
+  ).join('');
+}
+
+function setFilter(p) { filter = p; render(); }
+
+document.querySelectorAll('thead th[data-col]').forEach(th => {
+  th.addEventListener('click', () => {
+    const c = th.dataset.col;
+    sortDir = sortCol===c ? -sortDir : 1;
+    sortCol = c;
+    document.querySelectorAll('thead th').forEach(t => t.classList.remove('sorted'));
+    th.classList.add('sorted');
+    render();
+  });
+});
+
+document.getElementById('searchInput').addEventListener('input', render);
+
+function doCopy(btn, text) {
+  navigator.clipboard.writeText(text.replace(/\\n/g,'\n').replace(/\\'/g,"'")).then(() => {
+    btn.classList.add('done');
+    btn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+    setTimeout(() => {
+      btn.classList.remove('done');
+      btn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy`;
+    }, 2000);
+  });
+}
+
+function del(id) { data = data.filter(d=>d.id!==id); render(); }
+
+// Modal
+function openModal() { document.getElementById('overlay').classList.add('show'); }
+function closeModal() { document.getElementById('overlay').classList.remove('show'); }
+function bgClose(e) { if (e.target===document.getElementById('overlay')) closeModal(); }
+
+function savePrompt() {
+  const uc = document.getElementById('f_uc').value.trim();
+  const pr = document.getElementById('f_pr').value.trim();
+  if (!uc || !pr) {
+    ['f_uc','f_pr'].forEach(id => {
+      if (!document.getElementById(id).value.trim())
+        document.getElementById(id).style.borderColor = 'var(--perplexity)';
+      setTimeout(()=>document.getElementById(id).style.borderColor='',1500);
+    });
+    return;
+  }
+  data.unshift({ id:nextId++, useCase:uc, prompt:pr, platform:document.getElementById('f_pl').value, remarks:document.getElementById('f_rm').value.trim() });
+  closeModal();
+  ['f_uc','f_pr','f_rm'].forEach(id=>document.getElementById(id).value='');
+  render();
+}
+
+document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); });
+
+// Scroll reveal
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); observer.unobserve(e.target); }});
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// Init
+render();
+</script>
+</body>
+</html>
