@@ -8,35 +8,161 @@ const birthdayPlan = {
   time: "Today · 7:00 PM · Bring your appetite"
 };
 
-// Carousel
+// =============================
+// CAROUSEL
+// =============================
+
 const track = document.querySelector('.carousel-track');
 const slides = [...document.querySelectorAll('.slide')];
 const dotsWrap = document.querySelector('.dots');
-let current = 0;
-let autoPlay;
 
+let current = 0;
+let autoPlay = null;
+
+const NORMAL_SLIDE_TIME = 5000;
+
+// Create dots
 slides.forEach((_, i) => {
   const dot = document.createElement('button');
+
   dot.type = 'button';
   dot.className = 'dot' + (i === 0 ? ' active' : '');
-  dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
-  dot.addEventListener('click', () => goToSlide(i));
+
+  dot.setAttribute(
+    'aria-label',
+    `Go to slide ${i + 1}`
+  );
+
+  dot.addEventListener('click', () => {
+    goToSlide(i);
+  });
+
   dotsWrap.appendChild(dot);
 });
 
+
 function goToSlide(index) {
-  current = (index + slides.length) % slides.length;
-  track.style.transform = `translateX(-${current * 100}%)`;
-  document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === current));
-  restartAutoPlay();
+
+  // Stop existing carousel timer
+  clearTimeout(autoPlay);
+
+  // Pause any video from the previous slide
+  const previousVideo =
+    slides[current].querySelector('video');
+
+  if (previousVideo) {
+    previousVideo.pause();
+    previousVideo.currentTime = 0;
+  }
+
+  // Calculate new slide
+  current =
+    (index + slides.length) % slides.length;
+
+  // Move carousel
+  track.style.transform =
+    `translateX(-${current * 100}%)`;
+
+  // Update navigation dots
+  document
+    .querySelectorAll('.dot')
+    .forEach((dot, i) => {
+      dot.classList.toggle(
+        'active',
+        i === current
+      );
+    });
+
+  handleCurrentSlide();
 }
-function restartAutoPlay() {
-  clearInterval(autoPlay);
-  autoPlay = setInterval(() => goToSlide(current + 1), 5000);
+
+
+function handleCurrentSlide() {
+
+  const currentSlide = slides[current];
+
+  const video =
+    currentSlide.querySelector('video');
+
+  // -------------------------
+  // VIDEO SLIDE
+  // -------------------------
+
+  if (video) {
+
+    clearTimeout(autoPlay);
+
+    video.currentTime = 0;
+
+    // Play video once
+    video.play().catch(() => {
+      /*
+        Browser blocked autoplay.
+
+        User can press Play manually.
+        Once video finishes, carousel
+        will continue normally.
+      */
+    });
+
+    return;
+  }
+
+
+  // -------------------------
+  // NORMAL IMAGE / GIF SLIDE
+  // -------------------------
+
+  autoPlay = setTimeout(() => {
+
+    goToSlide(current + 1);
+
+  }, NORMAL_SLIDE_TIME);
 }
-document.querySelector('.next').addEventListener('click', () => goToSlide(current + 1));
-document.querySelector('.prev').addEventListener('click', () => goToSlide(current - 1));
-restartAutoPlay();
+
+
+// Previous button
+document
+  .querySelector('.prev')
+  .addEventListener('click', () => {
+
+    goToSlide(current - 1);
+
+  });
+
+
+// Next button
+document
+  .querySelector('.next')
+  .addEventListener('click', () => {
+
+    goToSlide(current + 1);
+
+  });
+
+
+// When a video finishes,
+// immediately move to next slide
+slides.forEach((slide, index) => {
+
+  const video = slide.querySelector('video');
+
+  if (!video) return;
+
+  video.addEventListener('ended', () => {
+
+    // Only move if this video
+    // is still the active slide
+    if (current === index) {
+      goToSlide(index + 1);
+    }
+
+  });
+
+});
+
+// Start carousel
+handleCurrentSlide();
 
 // Reveal on scroll
 const observer = new IntersectionObserver(entries => {
@@ -142,3 +268,18 @@ admireCards.forEach((card) => {
 document.getElementById('celebrateBtn').addEventListener('click', () => launchConfetti(180));
 document.getElementById('finalConfetti').addEventListener('click', () => launchConfetti(220));
 document.getElementById('year').textContent = new Date().getFullYear();
+
+// Automatic celebration every 10–15 seconds
+function scheduleAutoCelebration() {
+  // Random delay between 10 and 15 seconds
+  const delay = 10000 + Math.random() * 5000;
+
+  setTimeout(() => {
+    launchConfetti(100);
+
+    // Schedule the next celebration
+    scheduleAutoCelebration();
+  }, delay);
+}
+
+scheduleAutoCelebration();
