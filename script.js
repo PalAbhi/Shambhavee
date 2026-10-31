@@ -2,10 +2,10 @@
 // QUICK CUSTOMIZATION
 // =============================
 const birthdayPlan = {
-  title: "Team dinner it is!",
+  title: "Special Birthday dinner it is!",
   message: "After careful analysis of vibes, weather, and cake probability, tonight's winning plan is a team dinner.",
-  place: "Dinner at [Venue Name]",
-  time: "Today · 7:00 PM · Bring your appetite"
+  place: "Dinner at Your Selected Place",
+  time: "Today · 8:00 PM · Bring your appetite & Black Denim"
 };
 
 // =============================
@@ -175,6 +175,186 @@ const observer = new IntersectionObserver(entries => {
 }, { threshold: 0.12 });
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
+
+// =============================
+// LUNCH GUESSING GAME
+// =============================
+
+const lunchAnswer = "cock and bull";
+const maximumLunchAttempts = 5;
+
+let lunchAttemptsUsed = 0;
+let unlockedHints = 0;
+
+const lunchGuessForm =
+  document.getElementById("lunchGuessForm");
+
+const lunchGuessInput =
+  document.getElementById("lunchGuess");
+
+const attemptCounter =
+  document.getElementById("attemptCounter");
+
+const guessFeedback =
+  document.getElementById("guessFeedback");
+
+const hintProgress =
+  document.getElementById("hintProgress");
+
+const lunchGuessStage =
+  document.getElementById("lunchGuessStage");
+
+const lunchSuccess =
+  document.getElementById("lunchSuccess");
+
+const lunchFailed =
+  document.getElementById("lunchFailed");
+
+const dinnerGame =
+  document.getElementById("dinnerGame");
+
+const hintCards = [
+  ...document.querySelectorAll(".hint-card")
+];
+
+
+/*
+  Converts likely variations into the same format.
+
+  These will all be accepted:
+  Cock & Bull
+  Cock and Bull
+  cock & bull
+  COCK AND BULL
+*/
+function normalizeLunchGuess(value) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+
+function updateAttemptCounter() {
+  const remaining =
+    maximumLunchAttempts - lunchAttemptsUsed;
+
+  attemptCounter.textContent =
+    `${remaining} ${remaining === 1 ? "attempt" : "attempts"} remaining`;
+}
+
+
+function unlockNextHint() {
+  if (unlockedHints >= hintCards.length) return;
+
+  hintCards[unlockedHints]
+    .classList.add("is-unlocked");
+
+  unlockedHints += 1;
+
+  hintProgress.textContent =
+    `${unlockedHints} of ${hintCards.length}`;
+}
+
+
+function showLunchSuccess() {
+  lunchGuessStage.classList.add("hidden");
+  lunchSuccess.classList.remove("hidden");
+
+  launchConfetti(260);
+}
+
+
+function showLunchFailure() {
+  lunchGuessStage.classList.add("hidden");
+  lunchFailed.classList.remove("hidden");
+}
+
+
+lunchGuessForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  const submittedGuess =
+    normalizeLunchGuess(lunchGuessInput.value);
+
+  if (!submittedGuess) {
+    guessFeedback.textContent =
+      "Type a guess first, birthday detective.";
+
+    lunchGuessInput.focus();
+    return;
+  }
+
+  if (submittedGuess === lunchAnswer) {
+    guessFeedback.textContent =
+      "Correct! Mystery solved.";
+
+    guessFeedback.classList.add("success");
+
+    showLunchSuccess();
+    return;
+  }
+
+  lunchAttemptsUsed += 1;
+
+  updateAttemptCounter();
+
+  if (lunchAttemptsUsed >= maximumLunchAttempts) {
+    showLunchFailure();
+    return;
+  }
+
+  unlockNextHint();
+
+  const remaining =
+    maximumLunchAttempts - lunchAttemptsUsed;
+
+  const wrongGuessMessages = [
+    "Not quite! Your first hint has been unlocked.",
+    "Still not it. Another hint is now available.",
+    "A very respectable guess, but no. Here comes another hint.",
+    "One final attempt. The last hint has been unlocked."
+  ];
+
+  guessFeedback.textContent =
+    wrongGuessMessages[lunchAttemptsUsed - 1] ||
+    `Keep guessing. You have ${remaining} attempts remaining.`;
+
+  lunchGuessInput.value = "";
+  lunchGuessInput.focus();
+});
+
+
+document
+  .querySelectorAll(".continue-to-dinner")
+  .forEach((button) => {
+
+    button.addEventListener("click", () => {
+      /*
+        Hide both potential lunch-result screens
+        and reveal the dinner-selection game.
+      */
+
+      lunchSuccess.classList.add("hidden");
+      lunchFailed.classList.add("hidden");
+
+      dinnerGame.classList.remove("hidden");
+
+      dinnerGame.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+
+      window.setTimeout(() => {
+        launchConfetti(100);
+      }, 650);
+    });
+
+  });
+
 // Illusion-of-choice game: every selection leads to one predetermined outcome.
 let selectedChoice = null;
 const revealButton = document.getElementById('revealPlan');
@@ -232,7 +412,7 @@ function drawConfetti(){
 const admireCards = document.querySelectorAll(".admire-card");
 
 admireCards.forEach((card) => {
-  const memoryImage = card.querySelector(".admire-card-back img");
+  const memoryVideo = card.querySelector(".memory-video");
 
   function toggleMemory() {
     const willOpen = !card.classList.contains("is-flipped");
@@ -240,16 +420,30 @@ admireCards.forEach((card) => {
     card.classList.toggle("is-flipped", willOpen);
     card.setAttribute("aria-pressed", String(willOpen));
 
-    /*
-      Reset the image source when opening the card.
-      This makes animated GIFs restart from the beginning.
-    */
-    if (willOpen && memoryImage) {
-      const imageSource =
-        memoryImage.dataset.src || memoryImage.getAttribute("src");
+    if (!memoryVideo) return;
 
-      memoryImage.setAttribute("src", "");
-      memoryImage.setAttribute("src", imageSource);
+    if (willOpen) {
+      // Ensure muted playback is allowed
+      memoryVideo.muted = true;
+      memoryVideo.currentTime = 0;
+
+      // Wait briefly for the card to begin flipping
+      setTimeout(() => {
+        const playPromise = memoryVideo.play();
+
+        if (playPromise !== undefined) {
+          playPromise.catch((error) => {
+            console.error(
+              "Memory video could not play:",
+              memoryVideo.src,
+              error
+            );
+          });
+        }
+      }, 150);
+    } else {
+      memoryVideo.pause();
+      memoryVideo.currentTime = 0;
     }
   }
 
@@ -262,8 +456,6 @@ admireCards.forEach((card) => {
     }
   });
 });
-
-
 
 document.getElementById('celebrateBtn').addEventListener('click', () => launchConfetti(180));
 document.getElementById('finalConfetti').addEventListener('click', () => launchConfetti(220));
@@ -283,3 +475,60 @@ function scheduleAutoCelebration() {
 }
 
 scheduleAutoCelebration();
+
+// =============================
+// WELL-WISHER VIDEO CAROUSEL
+// =============================
+const wishTrack = document.querySelector('.wish-track');
+const wishSlides = [...document.querySelectorAll('.wish-slide')];
+const wishDotsContainer = document.querySelector('.wish-dots');
+let currentWish = 0;
+
+if (wishTrack && wishSlides.length) {
+  wishSlides.forEach((_, index) => {
+    const dot = document.createElement('button');
+    dot.type = 'button';
+    dot.className = 'wish-dot' + (index === 0 ? ' active' : '');
+    dot.setAttribute('aria-label', `Open birthday message ${index + 1}`);
+    dot.addEventListener('click', () => showWish(index));
+    wishDotsContainer.appendChild(dot);
+  });
+
+  function stopWishVideos() {
+    wishSlides.forEach(slide => {
+      const video = slide.querySelector('.wish-video');
+      const replay = slide.querySelector('.wish-replay');
+      if (!video) return;
+      video.pause();
+      video.currentTime = 0;
+      replay?.classList.add('hidden');
+    });
+  }
+
+  function showWish(index) {
+    stopWishVideos();
+    currentWish = (index + wishSlides.length) % wishSlides.length;
+    wishTrack.style.transform = `translateX(-${currentWish * 100}%)`;
+    document.querySelectorAll('.wish-dot').forEach((dot, i) => dot.classList.toggle('active', i === currentWish));
+  }
+
+  document.querySelector('.wish-prev').addEventListener('click', () => showWish(currentWish - 1));
+  document.querySelector('.wish-next').addEventListener('click', () => showWish(currentWish + 1));
+
+  wishSlides.forEach(slide => {
+    const video = slide.querySelector('.wish-video');
+    const envelope = slide.querySelector('.wish-envelope');
+    const replay = slide.querySelector('.wish-replay');
+
+    envelope.addEventListener('click', () => {
+      video.currentTime = 0;
+      video.play().then(() => envelope.classList.add('is-open')).catch(error => console.log('Birthday message could not play:', error));
+    });
+    video.addEventListener('ended', () => replay.classList.remove('hidden'));
+    replay.addEventListener('click', () => {
+      replay.classList.add('hidden');
+      video.currentTime = 0;
+      video.play().catch(error => console.log('Birthday message could not replay:', error));
+    });
+  });
+}
